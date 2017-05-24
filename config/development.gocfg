@@ -1,0 +1,26 @@
+package config
+
+type SystemConfig struct {
+	Help bool
+
+	Cipher   string
+	Password string
+	Port     string
+	Quiet    bool
+
+	// server config
+	Server  bool
+	Address string
+
+	// client config
+	Client string
+}
+
+// default config of system
+var Setting *SystemConfig = &SystemConfig{
+	Address:  ":8488",
+	Cipher:   "AEAD_CHACHA20_POLY1305",
+	Password: "Shadowsocks!Go",
+	Port:     "8488",
+	Quiet:    false,
+}
