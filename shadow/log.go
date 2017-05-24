@@ -2,12 +2,13 @@ package shadow
 
 import (
 	"log"
-
 	"shadowsocks/config"
 )
 
-func Println(v ...interface{}) {
+// Println is the switch of log
+// User -q to quite the log output
+func Printf(format string, v ...interface{}) {
 	if !config.Setting.Quiet {
-		log.Println(v...)
+		log.Printf(format, v...)
 	}
 }
