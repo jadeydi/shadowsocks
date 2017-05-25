@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"shadowsocks/client"
 	"shadowsocks/config"
 	"shadowsocks/server"
 )
@@ -18,6 +19,12 @@ func main() {
 		flag.Usage()
 		return
 	}
+
+	if setting.Client != "" {
+		c := &client.ClientImpl{}
+		c.Start()
+	}
+
 	if setting.Server {
 		s := &server.ServerImpl{}
 		s.Start()
@@ -36,10 +43,11 @@ func parseFlags() {
 	flag.BoolVar(&setting.Quiet, "q", false, "suppress log output")
 
 	// server application flags
-	flag.BoolVar(&setting.Server, "s", false, "(server-only) start server")
+	flag.BoolVar(&setting.Server, "S", false, "(server-only) start server")
 	flag.StringVar(&setting.Address, "a", ":8488", "(server-only) default :8488 address should be listened by server")
 
 	// client application flags
-	flag.StringVar(&setting.Client, "c", "", "(client-only) address should be dial by client")
+	flag.StringVar(&setting.Client, "C", "", "(client-only) server address should be connected by client")
+	flag.StringVar(&setting.Socks, "s", "1080", "(client-only) the port is listened by incoming SOCKS5 connection, default: 1080")
 	flag.Parse()
 }

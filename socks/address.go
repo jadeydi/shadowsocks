@@ -1,4 +1,4 @@
-package shadow
+package socks
 
 import (
 	"errors"
@@ -14,6 +14,12 @@ const (
 
 	MaxAddrLen = 1 + 1 + 255 + 2
 )
+
+type Address []byte
+
+func (a Address) String() string {
+	return UnmarshalAddr(a)
+}
 
 // Addresses follow the SOCKS5 address format.
 // doc: https://tools.ietf.org/html/rfc1928#section-5
@@ -74,7 +80,7 @@ func UnmarshalAddr(in []byte) string {
 }
 
 // ReadAddr implements get address from tcp connection reader.
-func ReadAddr(r io.Reader) ([]byte, error) {
+func ReadAddr(r io.Reader) (Address, error) {
 	b := make([]byte, MaxAddrLen)
 	// Read the type of the address
 	_, err := io.ReadFull(r, b[:1])
@@ -99,5 +105,5 @@ func ReadAddr(r io.Reader) ([]byte, error) {
 		return b[:1+net.IPv6len+2], err
 	}
 
-	return nil, errors.New("8")
+	return nil, AddressNotSupportedError
 }

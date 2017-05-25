@@ -2,7 +2,6 @@ package server
 
 import (
 	"log"
-
 	"shadowsocks/config"
 	"shadowsocks/shadow"
 )
