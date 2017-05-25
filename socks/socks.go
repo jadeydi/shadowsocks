@@ -51,7 +51,6 @@ func Relay(src, tgt net.Conn) (int64, int64, error) {
 
 	go func() {
 		data, err := io.Copy(tgt, src)
-		src.SetDeadline(time.Now())
 		tgt.SetDeadline(time.Now())
 		read <- data
 		cerr <- err
@@ -61,7 +60,6 @@ func Relay(src, tgt net.Conn) (int64, int64, error) {
 	// more detail: https://www.reddit.com/r/golang/comments/3m54cf/netconn_setdeadline_confusion/
 	written, err := io.Copy(src, tgt)
 	src.SetDeadline(time.Now())
-	tgt.SetDeadline(time.Now())
 	if err == nil {
 		err = <-cerr
 	}

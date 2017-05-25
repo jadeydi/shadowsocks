@@ -14,5 +14,5 @@ func (c *ClientImpl) Start() {
 	if err := shadow.ParseURI(setting.Client); err != nil {
 		log.Panicln(err)
 	}
-	go c.ListenSock(setting.Socks, setting.Client)
+	go c.ListenSock(setting.Socks, setting.Address)
 }
