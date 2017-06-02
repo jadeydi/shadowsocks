@@ -50,7 +50,9 @@ func Relay(src, tgt net.Conn) (int64, int64, error) {
 	read, cerr := make(chan int64), make(chan error)
 
 	go func() {
+		// src.WriteTo(tgt) or tgt.ReadFrom(src)
 		data, err := io.Copy(tgt, src)
+		src.SetDeadline(time.Now())
 		tgt.SetDeadline(time.Now())
 		read <- data
 		cerr <- err
@@ -58,8 +60,10 @@ func Relay(src, tgt net.Conn) (int64, int64, error) {
 
 	// should break the net.Conn
 	// more detail: https://www.reddit.com/r/golang/comments/3m54cf/netconn_setdeadline_confusion/
+	// tgt.WriteTo(src) or src.ReadFrom(tgt)
 	written, err := io.Copy(src, tgt)
 	src.SetDeadline(time.Now())
+	tgt.SetDeadline(time.Now())
 	if err == nil {
 		err = <-cerr
 	}

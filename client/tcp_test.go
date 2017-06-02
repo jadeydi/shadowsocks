@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"net"
+	"shadowsocks/config"
 	"shadowsocks/server"
 	"shadowsocks/socks"
 	"strings"
@@ -16,10 +17,13 @@ var txt string = "Hello ShadowSocks"
 
 func TestListenTCP(t *testing.T) {
 	assert := assert.New(t)
+	setting := config.Setting
+	ciph := socks.ChoiceCipher(setting.Cipher, setting.Password)
+	ciph2 := socks.ChoiceCipher(setting.Cipher, setting.Password)
 	c, s := &ClientImpl{}, &server.ServerImpl{}
 	go cloud()
-	go s.ListenTCP("127.0.0.1:8488")
-	go c.ListenSock("10089", "127.0.0.1:8488")
+	go s.ListenTCP("127.0.0.1:8488", ciph)
+	go c.ListenSock("10089", "127.0.0.1:8488", ciph2)
 	time.Sleep(time.Second)
 
 	conn, err := net.Dial("tcp", "127.0.0.1:10089")
@@ -32,6 +36,7 @@ func TestListenTCP(t *testing.T) {
 	conn.Read(buf)
 	b := []byte{5, 1, 0}
 	b1, _ := socks.MarshalAddr("127.0.0.1:3000")
+	//b1, _ := socks.MarshalAddr("zhihu.com:443")
 	b = append(b, b1...)
 	conn.Write(b)
 	conn.Read(buf)

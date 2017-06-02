@@ -3,12 +3,13 @@ package server
 import (
 	"log"
 	"net"
+	"shadowsocks/aead"
 	"shadowsocks/shadow"
 	"shadowsocks/socks"
 )
 
 // Start to listen TCP on address
-func (s *ServerImpl) ListenTCP(addr string) {
+func (s *ServerImpl) ListenTCP(addr string, ciph socks.SocksCipher) {
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Panicln("failed to listen TCP on %s: %v", addr, err)
@@ -28,6 +29,7 @@ func (s *ServerImpl) ListenTCP(addr string) {
 		go func(c net.Conn) {
 			defer c.Close()
 			c.(*net.TCPConn).SetKeepAlive(true)
+			c = aead.NewStream(c, ciph)
 
 			rAddr, err := socks.ReadAddr(c)
 			if err != nil {
@@ -43,6 +45,9 @@ func (s *ServerImpl) ListenTCP(addr string) {
 			rc.(*net.TCPConn).SetKeepAlive(true)
 			shadow.Printf("proxy %s <-> %s", c.RemoteAddr(), rAddr)
 			if _, _, err = socks.Relay(c, rc); err != nil {
+				if err, ok := err.(net.Error); ok && err.Timeout() {
+					return // ignore i/o timeout
+				}
 				shadow.Printf("relay error: %v", err)
 			}
 		}(c)

@@ -4,6 +4,7 @@ import (
 	"log"
 	"shadowsocks/config"
 	"shadowsocks/shadow"
+	"shadowsocks/socks"
 )
 
 type ClientImpl struct{}
@@ -14,5 +15,6 @@ func (c *ClientImpl) Start() {
 	if err := shadow.ParseURI(setting.Client); err != nil {
 		log.Panicln(err)
 	}
-	go c.ListenSock(setting.Socks, setting.Address)
+	ciph := socks.ChoiceCipher(setting.Cipher, setting.Password)
+	go c.ListenSock(setting.Socks, setting.Address, ciph)
 }
