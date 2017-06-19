@@ -4,25 +4,24 @@ import (
 	"bytes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha1"
 	"io"
+	"log"
 	"net"
-	"shadowsocks/socks"
+
+	"golang.org/x/crypto/hkdf"
 )
 
 const payloadLimit = 0x3FFF // 16*1024 - 1
 
 type Stream struct {
-	Salt, Nonce, Remain []byte
+	Key, Nonce, Remain []byte
+	Salt               []byte
+	SaltSize           int
 
 	net.Conn
-	socks.SocksCipher
 	cipher.AEAD
-}
-
-// NewStream return a new *aead.Stream, which contains encryption methods,
-// encrypt and decrypt tcp data
-func NewStream(conn net.Conn, c socks.SocksCipher) *Stream {
-	return &Stream{Conn: conn, SocksCipher: c}
+	AEADBuilder func(salt []byte) (cipher.AEAD, error)
 }
 
 // Read implement TCP method. Which read the source data from TCP net.Conn,
@@ -177,7 +176,7 @@ func (s *Stream) outlet() error {
 }
 
 func (s *Stream) inject(r io.Reader) error {
-	s.Salt = make([]byte, s.KeySize())
+	s.Salt = make([]byte, s.SaltSize)
 	_, err := io.ReadFull(r, s.Salt)
 	if err != nil {
 		return err
@@ -196,5 +195,21 @@ func (s *Stream) incrNonce() {
 		if s.Nonce[i] != 0 {
 			return
 		}
+	}
+}
+
+func (s *Stream) Builder(salt []byte) (cipher.AEAD, error) {
+	subkey := make([]byte, len(s.Key))
+	s.hkdfSHA1(s.Key, salt, subkey)
+	return s.AEADBuilder(subkey)
+}
+
+// TODO should handle error
+// hkdfSHA1 is a function that takes a secret key, a non-secret salt, an info string, and produces a subkey that is cryptographically strong even if the input secret key is weak.
+func (s *Stream) hkdfSHA1(key, salt, subkey []byte) {
+	info := []byte("ss-subkey")
+	r := hkdf.New(sha1.New, key, salt, info)
+	if _, err := io.ReadFull(r, subkey); err != nil {
+		log.Panicln(err)
 	}
 }

@@ -1,4 +1,4 @@
-package socks
+package shadow
 
 import (
 	"errors"
@@ -9,8 +9,8 @@ import (
 
 const (
 	IPv4     = 0x01
-	VLDomain = 0x03 // Variable Length Domain
 	IPv6     = 0x04
+	VLDomain = 0x03 // Variable Length Domain
 
 	MaxAddrLen = 1 + 1 + 255 + 2
 )
@@ -33,14 +33,12 @@ func MarshalAddr(in string) ([]byte, error) {
 	}
 
 	if ip := net.ParseIP(host); ip != nil {
-		l, v := net.IPv6len, IPv6
-		if ipv4 := ip.To4(); ipv4 != nil {
-			l = net.IPv4len
-			v = IPv4
-			ip = ipv4
+		l, t := net.IPv6len, IPv6
+		if v := ip.To4(); v != nil {
+			l, t, ip = net.IPv4len, IPv4, v
 		}
 		addr = make([]byte, 1+l+2)
-		addr[0] = byte(v)
+		addr[0] = byte(t)
 		copy(addr[1:], ip) // copy is more effective than append
 	} else {
 		if len(host) > 255 {

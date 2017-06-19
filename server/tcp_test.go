@@ -3,9 +3,8 @@ package server
 import (
 	"fmt"
 	"net"
-	"shadowsocks/aead"
 	"shadowsocks/config"
-	"shadowsocks/socks"
+	"shadowsocks/shadow"
 	"strings"
 	"testing"
 	"time"
@@ -16,22 +15,37 @@ import (
 var txt string = "Hello ShadowSocks"
 
 func TestListenTCP(t *testing.T) {
-	assert := assert.New(t)
+	testAddr := []struct {
+		name, address string
+	}{
+		{"AEAD", "AES-256-GCM:Shadowsocks!Go@google.com"},
+		//{"Stream", "AES-128-CTR:Shadowsocks!Go@google.com"},
+	}
+	for _, a := range testAddr {
+		t.Run(a.name, func(t *testing.T) {
+			testServer(t, a.address)
+		})
+	}
+}
 
+func testServer(t *testing.T, addr string) {
+	assert := assert.New(t)
+	shadow.ParseURI(addr)
 	setting := config.Setting
-	ciph := socks.ChoiceCipher(setting.Cipher, setting.Password)
+
+	ciph := shadow.ChoiceCipher(setting.Cipher, setting.Password)
 	s := &ServerImpl{}
 	go cloud()
 	go s.ListenTCP("127.0.0.1:8488", ciph)
 	time.Sleep(time.Second)
 
-	ciph2 := socks.ChoiceCipher(setting.Cipher, setting.Password)
+	ciph2 := shadow.ChoiceCipher(setting.Cipher, setting.Password)
 	conn, err := net.Dial("tcp", "127.0.0.1:8488")
 	assert.Nil(err)
-	conn = aead.NewStream(conn, ciph2)
+	conn = ciph2.NewStream(conn)
 	defer conn.Close()
 
-	b, _ := socks.MarshalAddr("127.0.0.1:3000")
+	b, _ := shadow.MarshalAddr("127.0.0.1:3000")
 	conn.Write(b)
 	buf := make([]byte, len(txt))
 	conn.Read(buf)
