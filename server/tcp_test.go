@@ -14,7 +14,7 @@ import (
 
 var txt string = "Hello ShadowSocks"
 
-func TestListenTCP(t *testing.T) {
+func TestListenServerTCP(t *testing.T) {
 	go cloud()
 	testAddr := []struct {
 		name, address string

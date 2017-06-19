@@ -24,6 +24,9 @@ func (s *Stream) Read(b []byte) (n int, err error) {
 		return
 	}
 	n, err = s.Conn.Read(b)
+	if err != nil {
+		return n, err
+	}
 	b = b[:n]
 	s.XORKeyStream(b, b)
 	return
@@ -44,8 +47,9 @@ func (s *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 			return
 		}
 		if l > 0 {
-			s.XORKeyStream(buf[:l], buf[:l])
-			l, err = s.Conn.Write(buf[:l])
+			buf = buf[:l]
+			s.XORKeyStream(buf, buf)
+			l, err = s.Conn.Write(buf)
 			n += int64(l)
 			if err != nil {
 				return
@@ -76,7 +80,7 @@ func (s *Stream) WriteTo(w io.Writer) (n int64, err error) {
 			return
 		}
 		if l > 0 {
-			l, err = s.Conn.Write(buf[:l])
+			l, err = w.Write(buf[:l])
 			n += int64(l)
 			if err != nil {
 				return

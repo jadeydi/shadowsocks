@@ -42,7 +42,7 @@ func (s *ServerImpl) ListenTCP(addr string, ciph shadow.SocksCipher) {
 			}
 			defer rc.Close()
 			rc.(*net.TCPConn).SetKeepAlive(true)
-			shadow.Printf("proxy %s <-> %s", c.RemoteAddr(), rAddr)
+			shadow.Printf("server proxy %s <-> %s", c.RemoteAddr(), rAddr)
 			if _, _, err = shadow.Relay(c, rc); err != nil {
 				if err, ok := err.(net.Error); ok && err.Timeout() {
 					return // ignore i/o timeout

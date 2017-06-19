@@ -15,18 +15,33 @@ import (
 
 var txt string = "Hello ShadowSocks"
 
-func TestListenTCP(t *testing.T) {
+func TestListenClientTCP(t *testing.T) {
+	go cloud()
+	testAddr := []struct {
+		name, address, port string
+	}{
+		{"AEAD", "AES-256-GCM:Shadowsocks!Go@google.com:8488", "10089"},
+		{"Stream", "AES-128-CTR:Shadowsocks!Go@google.com:8588", "10099"},
+	}
+
+	for _, a := range testAddr {
+		t.Run(a.name, func(t *testing.T) {
+			testClient(t, a.address, a.port)
+		})
+	}
+}
+
+func testClient(t *testing.T, addr, port string) {
 	assert := assert.New(t)
+	shadow.ParseURI(addr)
 	setting := config.Setting
 	ciph := shadow.ChoiceCipher(setting.Cipher, setting.Password)
-	ciph2 := shadow.ChoiceCipher(setting.Cipher, setting.Password)
 	c, s := &ClientImpl{}, &server.ServerImpl{}
-	go cloud()
-	go s.ListenTCP("127.0.0.1:8488", ciph)
-	go c.ListenSock("10089", "127.0.0.1:8488", ciph2)
+	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
+	go c.ListenSock(port, fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
 	time.Sleep(time.Second)
 
-	conn, err := net.Dial("tcp", "127.0.0.1:10089")
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", port))
 	assert.Nil(err)
 	defer conn.Close()
 
@@ -36,7 +51,6 @@ func TestListenTCP(t *testing.T) {
 	conn.Read(buf)
 	b := []byte{5, 1, 0}
 	b1, _ := shadow.MarshalAddr("127.0.0.1:3000")
-	//b1, _ := shadow.MarshalAddr("zhihu.com:443")
 	b = append(b, b1...)
 	conn.Write(b)
 	conn.Read(buf)
