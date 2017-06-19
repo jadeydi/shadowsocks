@@ -15,11 +15,12 @@ import (
 var txt string = "Hello ShadowSocks"
 
 func TestListenTCP(t *testing.T) {
+	go cloud()
 	testAddr := []struct {
 		name, address string
 	}{
-		{"AEAD", "AES-256-GCM:Shadowsocks!Go@google.com"},
-		//{"Stream", "AES-128-CTR:Shadowsocks!Go@google.com"},
+		{"AEAD", "AES-256-GCM:Shadowsocks!Go@google.com:8488"},
+		{"Stream", "AES-128-CTR:Shadowsocks!Go@google.com:8588"},
 	}
 	for _, a := range testAddr {
 		t.Run(a.name, func(t *testing.T) {
@@ -35,12 +36,11 @@ func testServer(t *testing.T, addr string) {
 
 	ciph := shadow.ChoiceCipher(setting.Cipher, setting.Password)
 	s := &ServerImpl{}
-	go cloud()
-	go s.ListenTCP("127.0.0.1:8488", ciph)
+	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
 	time.Sleep(time.Second)
 
 	ciph2 := shadow.ChoiceCipher(setting.Cipher, setting.Password)
-	conn, err := net.Dial("tcp", "127.0.0.1:8488")
+	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", setting.Port))
 	assert.Nil(err)
 	conn = ciph2.NewStream(conn)
 	defer conn.Close()

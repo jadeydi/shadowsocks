@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"shadowsocks/shadow"
@@ -10,7 +11,7 @@ import (
 func (s *ServerImpl) ListenTCP(addr string, ciph shadow.SocksCipher) {
 	l, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Panicln("failed to listen TCP on %s: %v", addr, err)
+		log.Panicln(fmt.Sprintf("failed to listen TCP on %s: %v", addr, err))
 	}
 	defer l.Close()
 	log.Printf("listening TCP on %s\n", addr)
