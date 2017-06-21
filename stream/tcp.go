@@ -92,12 +92,11 @@ func (s *Stream) WriteTo(w io.Writer) (n int64, err error) {
 func (s *Stream) inlet() error {
 	if len(s.IV) == 0 {
 		s.IV = make([]byte, s.IVSize)
-		_, err := io.ReadFull(s.Conn, s.IV)
-		if err != nil {
+		var err error
+		if _, err = io.ReadFull(s.Conn, s.IV); err != nil {
 			return err
 		}
-		s.Stream, err = s.Decrypter(s.IV)
-		if err != nil {
+		if s.Stream, err = s.Decrypter(s.IV); err != nil {
 			return err
 		}
 	}
@@ -107,14 +106,17 @@ func (s *Stream) inlet() error {
 func (s *Stream) outlet() error {
 	if len(s.IV) == 0 {
 		s.IV = make([]byte, s.IVSize)
-		_, err := io.ReadFull(rand.Reader, s.IV)
-		if err != nil {
+		var err error
+		if _, err = io.ReadFull(rand.Reader, s.IV); err != nil {
 			return err
 		}
-		s.Conn.Write(s.IV)
-		s.Stream, err = s.Encrypter(s.IV)
-		if err != nil {
+		if s.Stream, err = s.Encrypter(s.IV); err != nil {
 			return err
+		}
+		if n, err = s.Conn.Write(s.IV); err != nil {
+			return err
+		} else if n != len(s.IV) {
+			return io.ErrShortWrite
 		}
 	}
 	return nil

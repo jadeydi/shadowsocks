@@ -163,7 +163,8 @@ func (s *Stream) inlet() error {
 
 func (s *Stream) outlet() error {
 	if len(s.Salt) == 0 {
-		if err := s.inject(rand.Reader); err != nil {
+		var err error
+		if err = s.inject(rand.Reader); err != nil {
 			return err
 		}
 		if n, err := s.Conn.Write(s.Salt); err != nil {
@@ -177,12 +178,11 @@ func (s *Stream) outlet() error {
 
 func (s *Stream) inject(r io.Reader) error {
 	s.Salt = make([]byte, s.SaltSize)
-	_, err := io.ReadFull(r, s.Salt)
-	if err != nil {
+	var err error
+	if _, err = io.ReadFull(r, s.Salt); err != nil {
 		return err
 	}
-	s.AEAD, err = s.Builder(s.Salt)
-	if err != nil {
+	if s.AEAD, err = s.Builder(s.Salt); err != nil {
 		return err
 	}
 	s.Nonce = make([]byte, s.NonceSize())

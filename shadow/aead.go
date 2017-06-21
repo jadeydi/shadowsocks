@@ -11,6 +11,12 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
+type MetaCipher struct {
+	Key         []byte
+	SaltSize    int
+	AEADBuilder func(key []byte) (cipher.AEAD, error)
+}
+
 var AEADCiphers = map[string]struct {
 	KeySize     int
 	SaltSize    int
@@ -32,12 +38,6 @@ func AESGCM(key []byte) (cipher.AEAD, error) {
 
 func Chacha20Poly1305(key []byte) (cipher.AEAD, error) {
 	return chacha20poly1305.New(key)
-}
-
-type MetaCipher struct {
-	Key         []byte
-	SaltSize    int
-	AEADBuilder func(key []byte) (cipher.AEAD, error)
 }
 
 func (mc *MetaCipher) NewStream(conn net.Conn) net.Conn {
