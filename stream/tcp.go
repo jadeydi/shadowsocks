@@ -113,7 +113,7 @@ func (s *Stream) outlet() error {
 		if s.Stream, err = s.Encrypter(s.IV); err != nil {
 			return err
 		}
-		if n, err = s.Conn.Write(s.IV); err != nil {
+		if n, err := s.Conn.Write(s.IV); err != nil {
 			return err
 		} else if n != len(s.IV) {
 			return io.ErrShortWrite
