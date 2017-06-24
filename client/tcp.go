@@ -6,7 +6,7 @@ import (
 	"shadowsocks/shadow"
 )
 
-// ListenSock build a tcp connection refer to SOCKS5
+// ListenSock build a SOCKS connection to server
 func (c *ClientImpl) ListenSock(port, serverAddr string, ciph shadow.SocksCipher) {
 	shadow.Printf("SOCKS proxy %s <-> %s", port, serverAddr)
 	f := func(c net.Conn) (shadow.Address, error) {
@@ -15,8 +15,8 @@ func (c *ClientImpl) ListenSock(port, serverAddr string, ciph shadow.SocksCipher
 	c.listenTCP(port, serverAddr, ciph, f)
 }
 
-// listenTCP implement a tcp tunnel from local to server
-// dstAddr is the distant server address. e.g. google.com:443 in SOCKS5 addressing format
+// listenTCP implement a tcp tunnel from local to server, which build a tcp listener on local port, and dial to remote server.
+// It exchange the data between client and server, contains write encrypt data to server, and decrypt data from server.
 func (c *ClientImpl) listenTCP(port, serverAddr string, ciph shadow.SocksCipher, dstAddr func(net.Conn) (shadow.Address, error)) {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {

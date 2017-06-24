@@ -7,7 +7,9 @@ import (
 	"shadowsocks/shadow"
 )
 
-// Start to listen TCP on address
+// ListenTCP is implemention of shadowsocks tcp data exchange in server side. Cointains:
+//  `1. read and dial to the remote server address.
+//   2. exchange data by relay.
 func (s *ServerImpl) ListenTCP(addr string, ciph shadow.SocksCipher) {
 	l, err := net.Listen("tcp", addr)
 	if err != nil {

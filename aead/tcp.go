@@ -1,3 +1,5 @@
+// Copyright 2017 jadeydi. All rights reserved.
+
 package aead
 
 import (
@@ -6,14 +8,16 @@ import (
 	"crypto/rand"
 	"crypto/sha1"
 	"io"
-	"log"
 	"net"
 
 	"golang.org/x/crypto/hkdf"
 )
 
-const payloadLimit = 0x3FFF // 16*1024 - 1
+const payloadLimit = 0x3FFF // size 16*1024 - 1
 
+// This is the AEAD Ciphers implementation for tcp.
+// Stream implement Read and Write methods of net.Conn, ReadFrom and WriteTo methods of io.Copy.
+// Decrypt data for Read and WriteTo, and encrypt for Write and ReadFrom.
 type Stream struct {
 	Key, Nonce, Remain []byte
 	Payload            []byte
@@ -25,8 +29,7 @@ type Stream struct {
 	AEADBuilder func(salt []byte) (cipher.AEAD, error)
 }
 
-// Read implement TCP method. Which read the source data from TCP net.Conn,
-// and return b after decrypt
+// Read read encrypted data from net.Conn, return it after decrypt.
 // more details: https://golang.org/pkg/io/#Reader
 func (s *Stream) Read(b []byte) (n int, err error) {
 	if err = s.inlet(); err != nil {
@@ -47,10 +50,8 @@ func (s *Stream) Read(b []byte) (n int, err error) {
 	return
 }
 
-// ReadFrom read all data from io.Reader encrypt underline stream data,
-// and return the data size.
-// Which is used by io.Copy, do not return io.EOF.
-// https://golang.org/pkg/io/#Copy
+// ReadFrom read all data from io.Reader, and encrypt the underline stream data, and write to net.Conn, Which is used by io.Copy, and do not return io.EOF.
+// More detail: https://golang.org/pkg/io/#Copy
 func (s *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 	if err = s.outlet(); err != nil {
 		return
@@ -59,9 +60,9 @@ func (s *Stream) ReadFrom(r io.Reader) (n int64, err error) {
 	return
 }
 
-// Write len(p) bytes to the underlying data stream.
-// p will be cute into slices, each slice is less than 0x3FFF.
-// https://golang.org/pkg/io/#Writer
+// Write implement a method, which write encrypted p to net.Conn. p will be cute into slices, each slice is less than 0x3FFF.
+// About slice size: https://shadowsocks.org/en/spec/AEAD-Ciphers.html
+// About io.Write: https://golang.org/pkg/io/#Writer
 func (s *Stream) Write(p []byte) (int, error) {
 	var l int64
 	l, err := s.ReadFrom(bytes.NewBuffer(p))
@@ -71,8 +72,7 @@ func (s *Stream) Write(p []byte) (int, error) {
 	return int(l), err
 }
 
-// WriteTo implement method, which used by io.Copy.
-// With encrypt the underlying stream data.
+// WriteTo implement method, which is read data from net.Conn, decrypt the data and write it to io.Writer. It is used by io.Copy.
 // https://golang.org/pkg/io/#Copy
 func (s *Stream) WriteTo(w io.Writer) (n int64, err error) {
 	if err = s.inlet(); err != nil {
@@ -202,18 +202,21 @@ func (s *Stream) incrNonce() {
 	}
 }
 
+// Builder is used to create cipher.AEAD, which is used to encrypt and decrypt data.
 func (s *Stream) Builder(salt []byte) (cipher.AEAD, error) {
 	subkey := make([]byte, len(s.Key))
-	s.hkdfSHA1(s.Key, salt, subkey)
+	if err := s.hkdfSHA1(s.Key, salt, subkey); err != nil {
+		return nil, err
+	}
 	return s.AEADBuilder(subkey)
 }
 
-// TODO should handle error
-// hkdfSHA1 is a function that takes a secret key, a non-secret salt, an info string, and produces a subkey that is cryptographically strong even if the input secret key is weak.
-func (s *Stream) hkdfSHA1(key, salt, subkey []byte) {
+// hkdfSHA1 is method that takes a secret key, a non-secret salt, an info string, and produces a subkey that is cryptographically strong even if the input secret key is weak.
+func (s *Stream) hkdfSHA1(key, salt, subkey []byte) error {
 	info := []byte("ss-subkey")
 	r := hkdf.New(sha1.New, key, salt, info)
 	if _, err := io.ReadFull(r, subkey); err != nil {
-		log.Panicln(err)
+		return err
 	}
+	return nil
 }

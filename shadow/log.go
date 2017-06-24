@@ -5,7 +5,7 @@ import (
 	"shadowsocks/config"
 )
 
-// Println is the switch of log
+// Println is the switch of log printer.
 // User -q to quite the log output
 func Printf(format string, v ...interface{}) {
 	if !config.Setting.Quiet {

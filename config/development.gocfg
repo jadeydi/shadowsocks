@@ -14,12 +14,14 @@ type SystemConfig struct {
 
 	// client config
 	Client string
+	Socks  string
 }
 
 // default config of system
 var Setting *SystemConfig = &SystemConfig{
-	Address:  ":8488",
-	Cipher:   "AEAD_CHACHA20_POLY1305",
+	Address: ":8488",
+	//Cipher:  "AES-256-CTR",
+	Cipher:   "AES-256-GCM",
 	Password: "Shadowsocks!Go",
 	Port:     "8488",
 	Quiet:    false,

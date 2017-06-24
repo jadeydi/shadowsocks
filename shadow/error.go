@@ -8,6 +8,7 @@ func (err Error) Error() string {
 	return fmt.Sprintf("SOCKS error: %d", err)
 }
 
+// Errors of Shadowsocks
 const (
 	ServerFailureError        = Error(1)
 	ConnectionNotAllowedError = Error(2)

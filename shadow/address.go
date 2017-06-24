@@ -17,14 +17,14 @@ const (
 
 type Address []byte
 
+// Convert address from []byte to string
 func (a Address) String() string {
 	return UnmarshalAddr(a)
 }
 
 // Addresses follow the SOCKS5 address format.
-// doc: https://tools.ietf.org/html/rfc1928#section-5
-
-// MarshalAddr convert a string (e.g. google.com:https) to a SOCK5 format address
+// More details: https://tools.ietf.org/html/rfc1928#section-5
+// MarshalAddr convert a string (e.g. google.com:443) to a SOCK5 format address
 func MarshalAddr(in string) ([]byte, error) {
 	var addr []byte
 	host, port, err := net.SplitHostPort(in)
@@ -55,8 +55,7 @@ func MarshalAddr(in string) ([]byte, error) {
 	return addr, nil
 }
 
-// UnmarshalAddr implements the decoding. Convert a SOCKS5 address to string
-// address type IPv4, IPv6, Variable Length Domain
+// UnmarshalAddr convert a []byte address to string
 func UnmarshalAddr(in []byte) string {
 	var (
 		host, port string
@@ -77,7 +76,7 @@ func UnmarshalAddr(in []byte) string {
 	return net.JoinHostPort(host, port)
 }
 
-// ReadAddr implements get address from tcp connection reader.
+// ReadAddr implements a method, which get address from io.Reader.
 func ReadAddr(r io.Reader) (Address, error) {
 	b := make([]byte, MaxAddrLen)
 	// Read the type of the address

@@ -47,25 +47,30 @@ func Handshake(rw io.ReadWriter) ([]byte, error) {
 // relay as its name, it's the bridge of server and target server,
 // send the request to target, get the response and send to client
 func Relay(src, tgt net.Conn) (int64, int64, error) {
-	read, cerr := make(chan int64), make(chan error)
+	type res struct {
+		N   int64
+		Err error
+	}
+	ch := make(chan res)
 
 	go func() {
 		// src.WriteTo(tgt) or tgt.ReadFrom(src)
-		data, err := io.Copy(tgt, src)
-		src.SetDeadline(time.Now())
+		n, err := io.Copy(tgt, src)
 		tgt.SetDeadline(time.Now())
-		read <- data
-		cerr <- err
+		src.SetDeadline(time.Now())
+		ch <- res{n, err}
 	}()
 
 	// should break the net.Conn
 	// more detail: https://www.reddit.com/r/golang/comments/3m54cf/netconn_setdeadline_confusion/
 	// tgt.WriteTo(src) or src.ReadFrom(tgt)
-	written, err := io.Copy(src, tgt)
-	src.SetDeadline(time.Now())
+	n, err := io.Copy(src, tgt)
 	tgt.SetDeadline(time.Now())
+	src.SetDeadline(time.Now())
+	rs := <-ch
+
 	if err == nil {
-		err = <-cerr
+		err = rs.Err
 	}
-	return <-read, written, err
+	return n, rs.N, err
 }

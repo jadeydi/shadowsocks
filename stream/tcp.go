@@ -9,6 +9,8 @@ import (
 	"net"
 )
 
+// This file implements the same functions like aead/tcp.go, the only difference is the encryption method.
+
 const bufSize = 32 * 1024
 
 type Stream struct {

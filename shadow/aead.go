@@ -11,12 +11,14 @@ import (
 	"golang.org/x/crypto/chacha20poly1305"
 )
 
+// MetaCipher contains Key, SaltSize, and implements SocksCipher interface.
 type MetaCipher struct {
 	Key         []byte
 	SaltSize    int
 	AEADBuilder func(key []byte) (cipher.AEAD, error)
 }
 
+// AEADCiphers contains the informations of AEAD ciphers, e.g.: KeySize, SaltSize, method to build cipher.AEAD.
 var AEADCiphers = map[string]struct {
 	KeySize     int
 	SaltSize    int
@@ -40,6 +42,7 @@ func Chacha20Poly1305(key []byte) (cipher.AEAD, error) {
 	return chacha20poly1305.New(key)
 }
 
+// NewStream covert a net.Conn to an custom net.Conn, which decrypt data from io.Reader and encrypt data write to io.Writer
 func (mc *MetaCipher) NewStream(conn net.Conn) net.Conn {
 	return &aead.Stream{
 		Key:         mc.Key,

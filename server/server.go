@@ -8,7 +8,7 @@ import (
 
 type ServerImpl struct{}
 
-// Start server application
+// Parse server address, choice cipher, and start server application
 func (s *ServerImpl) Start() {
 	setting := config.Setting
 	if err := shadow.ParseURI(setting.Address); err != nil {
