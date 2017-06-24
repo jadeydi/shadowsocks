@@ -2,7 +2,6 @@ package stream
 
 import (
 	"bytes"
-	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
@@ -14,8 +13,9 @@ import (
 const bufSize = 32 * 1024
 
 type Stream struct {
-	Key, IV []byte
-	IVSize  int
+	Key, IV              []byte
+	IVSize               int
+	Encrypter, Decrypter func(key, iv []byte) (cipher.Stream, error)
 
 	net.Conn
 	cipher.Stream
@@ -98,7 +98,7 @@ func (s *Stream) inlet() error {
 		if _, err = io.ReadFull(s.Conn, s.IV); err != nil {
 			return err
 		}
-		if s.Stream, err = s.Decrypter(s.IV); err != nil {
+		if s.Stream, err = s.Decrypter(s.Key, s.IV); err != nil {
 			return err
 		}
 	}
@@ -112,7 +112,7 @@ func (s *Stream) outlet() error {
 		if _, err = io.ReadFull(rand.Reader, s.IV); err != nil {
 			return err
 		}
-		if s.Stream, err = s.Encrypter(s.IV); err != nil {
+		if s.Stream, err = s.Encrypter(s.Key, s.IV); err != nil {
 			return err
 		}
 		if n, err := s.Conn.Write(s.IV); err != nil {
@@ -122,22 +122,4 @@ func (s *Stream) outlet() error {
 		}
 	}
 	return nil
-}
-
-func (s *Stream) Encrypter(iv []byte) (cipher.Stream, error) {
-	block, err := aes.NewCipher(s.Key)
-	if err != nil {
-		return nil, err
-	}
-	stream := cipher.NewCFBEncrypter(block, iv)
-	return stream, nil
-}
-
-func (s *Stream) Decrypter(iv []byte) (cipher.Stream, error) {
-	block, err := aes.NewCipher(s.Key)
-	if err != nil {
-		return nil, err
-	}
-	stream := cipher.NewCFBDecrypter(block, iv)
-	return stream, nil
 }
