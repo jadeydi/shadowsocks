@@ -19,20 +19,22 @@ var StreamCiphers = map[string]struct {
 	KeySize, IVSize      int
 	Encrypter, Decrypter func(key, iv []byte) (cipher.Stream, error)
 }{
-	"AES-128-CTR": {16, 16, CFBEncrypter, CFBDecrypter},
-	"AES-192-CTR": {24, 16, CFBEncrypter, CFBDecrypter},
-	"AES-256-CTR": {32, 16, CFBEncrypter, CFBDecrypter},
-	"AES-128-CFB": {16, 16, CFBBuilder, CFBBuilder},
-	"AES-192-CFB": {24, 16, CFBBuilder, CFBBuilder},
-	"AES-256-CFB": {32, 16, CFBBuilder, CFBBuilder},
+	"AES-128-CFB": {16, 16, CFBEncrypter, CFBDecrypter},
+	"AES-192-CFB": {24, 16, CFBEncrypter, CFBDecrypter},
+	"AES-256-CFB": {32, 16, CFBEncrypter, CFBDecrypter},
+	"AES-128-CTR": {16, 16, CTRBuilder, CTRBuilder},
+	"AES-192-CTR": {24, 16, CTRBuilder, CTRBuilder},
+	"AES-256-CTR": {32, 16, CTRBuilder, CTRBuilder},
 }
 
 // NewStream covert a net.Conn to an custom net.Conn, which decrypt data from io.Reader and encrypt data write to io.Writer
 func (sc *StreamCipher) NewStream(conn net.Conn) net.Conn {
 	return &stream.Stream{
-		Conn:   conn,
-		IVSize: sc.IVSize,
-		Key:    sc.Key,
+		Conn:      conn,
+		IVSize:    sc.IVSize,
+		Key:       sc.Key,
+		Encrypter: sc.Encrypter,
+		Decrypter: sc.Decrypter,
 	}
 }
 
@@ -56,7 +58,7 @@ func CFBDecrypter(key, iv []byte) (cipher.Stream, error) {
 }
 
 // CTR mode
-func CFBBuilder(key, iv []byte) (cipher.Stream, error) {
+func CTRBuilder(key, iv []byte) (cipher.Stream, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err

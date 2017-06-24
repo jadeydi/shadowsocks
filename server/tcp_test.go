@@ -19,8 +19,16 @@ func TestListenServerTCP(t *testing.T) {
 	testAddr := []struct {
 		name, address string
 	}{
-		{"AEAD", "AES-256-GCM:Shadowsocks!Go@google.com:8488"},
-		{"Stream", "AES-128-CTR:Shadowsocks!Go@google.com:8588"},
+		{"AEAD128", "AES-128-GCM:Shadowsocks!Go@google.com:8708"},
+		{"AEAD192", "AES-192-GCM:Shadowsocks!Go@google.com:8718"},
+		{"AEAD256", "AES-256-GCM:Shadowsocks!Go@google.com:8728"},
+		{"AEADCHACHA20", "CHACHA20-IETF-POLY1305:Shadowsocks!Go@google.com:8738"},
+		{"Stream128CTR", "AES-128-CTR:Shadowsocks!Go@google.com:8518"},
+		{"Stream192CTR", "AES-192-CTR:Shadowsocks!Go@google.com:8528"},
+		{"Stream256CTR", "AES-256-CTR:Shadowsocks!Go@google.com:8538"},
+		{"Stream128CFB", "AES-128-CFB:Shadowsocks!Go@google.com:8548"},
+		{"Stream192CFB", "AES-192-CFB:Shadowsocks!Go@google.com:8558"},
+		{"Stream256CFB", "AES-256-CFB:Shadowsocks!Go@google.com:8568"},
 	}
 	for _, a := range testAddr {
 		t.Run(a.name, func(t *testing.T) {
@@ -46,7 +54,9 @@ func testServer(t *testing.T, addr string) {
 	defer conn.Close()
 
 	b, _ := shadow.MarshalAddr("127.0.0.1:3000")
-	conn.Write(b)
+	n, err := conn.Write(b)
+	assert.Nil(err)
+	assert.Equal(n, len(b))
 	buf := make([]byte, len(txt))
 	conn.Read(buf)
 	assert.Equal("HELLO SHADOWSOCKS", string(buf))

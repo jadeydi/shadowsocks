@@ -20,8 +20,16 @@ func TestListenClientTCP(t *testing.T) {
 	testAddr := []struct {
 		name, address, port string
 	}{
-		{"AEAD", "AES-256-GCM:Shadowsocks!Go@google.com:8488", "10089"},
-		{"Stream", "AES-128-CTR:Shadowsocks!Go@google.com:8588", "10099"},
+		{"AEAD128", "AES-128-GCM:Shadowsocks!Go@google.com:8708", "10089"},
+		{"AEAD192", "AES-192-GCM:Shadowsocks!Go@google.com:8718", "10189"},
+		{"AEAD256", "AES-256-GCM:Shadowsocks!Go@google.com:8728", "10289"},
+		{"AEADCHACHA20", "CHACHA20-IETF-POLY1305:Shadowsocks!Go@google.com:8738", "10389"},
+		{"Stream128CTR", "AES-128-CTR:Shadowsocks!Go@google.com:8518", "10489"},
+		{"Stream192CTR", "AES-192-CTR:Shadowsocks!Go@google.com:8528", "10589"},
+		{"Stream256CTR", "AES-256-CTR:Shadowsocks!Go@google.com:8538", "10689"},
+		{"Stream128CFB", "AES-128-CFB:Shadowsocks!Go@google.com:8548", "10789"},
+		{"Stream192CFB", "AES-192-CFB:Shadowsocks!Go@google.com:8558", "10889"},
+		{"Stream256CFB", "AES-256-CFB:Shadowsocks!Go@google.com:8568", "10989"},
 	}
 
 	for _, a := range testAddr {

@@ -24,8 +24,10 @@ func ChoiceCipher(name, password string) SocksCipher {
 
 	if c, ok := StreamCiphers[strings.ToUpper(name)]; ok {
 		return &StreamCipher{
-			Key:    cipherKey(password, c.KeySize),
-			IVSize: c.IVSize,
+			Key:       cipherKey(password, c.KeySize),
+			IVSize:    c.IVSize,
+			Encrypter: c.Encrypter,
+			Decrypter: c.Decrypter,
 		}
 	}
 	log.Panicln("Cipher is not valid")
