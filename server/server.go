@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"shadowsocks/config"
+	"shadowsocks/security"
 	"shadowsocks/shadow"
 )
 
@@ -14,6 +15,6 @@ func (s *ServerImpl) Start() {
 	if err := shadow.ParseURI(setting.Address); err != nil {
 		log.Panicln(err)
 	}
-	ciph := shadow.ChoiceCipher(setting.Cipher, setting.Password)
-	go s.ListenTCP(setting.Address, ciph)
+	cipher := security.Choice(setting.Cipher, setting.Password)
+	go s.ListenTCP(setting.Address, cipher)
 }

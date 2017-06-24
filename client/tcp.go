@@ -3,21 +3,22 @@ package client
 import (
 	"fmt"
 	"net"
+	"shadowsocks/security"
 	"shadowsocks/shadow"
 )
 
 // ListenSock build a SOCKS connection to server
-func (c *ClientImpl) ListenSock(port, serverAddr string, ciph shadow.SocksCipher) {
+func (c *ClientImpl) ListenSock(port, serverAddr string, cipher security.SocksCipher) {
 	shadow.Printf("SOCKS proxy %s <-> %s", port, serverAddr)
 	f := func(c net.Conn) (shadow.Address, error) {
 		return shadow.Handshake(c)
 	}
-	c.listenTCP(port, serverAddr, ciph, f)
+	c.listenTCP(port, serverAddr, cipher, f)
 }
 
 // listenTCP implement a tcp tunnel from local to server, which build a tcp listener on local port, and dial to remote server.
 // It exchange the data between client and server, contains write encrypt data to server, and decrypt data from server.
-func (c *ClientImpl) listenTCP(port, serverAddr string, ciph shadow.SocksCipher, dstAddr func(net.Conn) (shadow.Address, error)) {
+func (c *ClientImpl) listenTCP(port, serverAddr string, cipher security.SocksCipher, dstAddr func(net.Conn) (shadow.Address, error)) {
 	l, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
 	if err != nil {
 		shadow.Printf("failed to listen on %s: %v", port, err)
@@ -48,7 +49,7 @@ func (c *ClientImpl) listenTCP(port, serverAddr string, ciph shadow.SocksCipher,
 			}
 			defer rc.Close()
 			rc.(*net.TCPConn).SetKeepAlive(true)
-			rc = ciph.NewStream(rc)
+			rc = cipher.NewStream(rc)
 
 			if _, err = rc.Write(addr); err != nil {
 				shadow.Printf("failed to send target address %s : %v", addr, err)

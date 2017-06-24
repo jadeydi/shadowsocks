@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"shadowsocks/config"
+	"shadowsocks/security"
 	"shadowsocks/shadow"
 	"strings"
 	"testing"
@@ -42,12 +43,12 @@ func testServer(t *testing.T, addr string) {
 	shadow.ParseURI(addr)
 	setting := config.Setting
 
-	ciph := shadow.ChoiceCipher(setting.Cipher, setting.Password)
+	ciph := security.Choice(setting.Cipher, setting.Password)
 	s := &ServerImpl{}
 	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
 	time.Sleep(time.Second)
 
-	ciph2 := shadow.ChoiceCipher(setting.Cipher, setting.Password)
+	ciph2 := security.Choice(setting.Cipher, setting.Password)
 	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", setting.Port))
 	assert.Nil(err)
 	conn = ciph2.NewStream(conn)

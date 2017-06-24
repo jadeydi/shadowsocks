@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"shadowsocks/config"
+	"shadowsocks/security"
 	"shadowsocks/server"
 	"shadowsocks/shadow"
 	"strings"
@@ -43,7 +44,7 @@ func testClient(t *testing.T, addr, port string) {
 	assert := assert.New(t)
 	shadow.ParseURI(addr)
 	setting := config.Setting
-	ciph := shadow.ChoiceCipher(setting.Cipher, setting.Password)
+	ciph := security.Choice(setting.Cipher, setting.Password)
 	c, s := &ClientImpl{}, &server.ServerImpl{}
 	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
 	go c.ListenSock(port, fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)

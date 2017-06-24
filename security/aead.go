@@ -1,6 +1,6 @@
 // aead is the implemention of AEAD Ciphers of shadowsocks
 // see more details: https://shadowsocks.org/en/spec/AEAD-Ciphers.html
-package shadow
+package security
 
 import (
 	"crypto/aes"

@@ -1,4 +1,4 @@
-package shadow
+package security
 
 import (
 	"crypto/md5"
@@ -13,7 +13,7 @@ type SocksCipher interface {
 
 // TODO password can't blank
 // name is setting.Cipher p is used to generate cipher key
-func ChoiceCipher(name, password string) SocksCipher {
+func Choice(name, password string) SocksCipher {
 	if c, ok := AEADCiphers[strings.ToUpper(name)]; ok {
 		return &MetaCipher{
 			Key:         cipherKey(password, c.KeySize),
