@@ -1,6 +1,9 @@
 package shadow
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 type Error byte
 
@@ -18,4 +21,8 @@ const (
 	TTLExpiredError           = Error(6)
 	CommandNotSupportedError  = Error(7)
 	AddressNotSupportedError  = Error(8)
+)
+
+var (
+	ShortPacketError = errors.New("short packet")
 )

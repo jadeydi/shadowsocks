@@ -17,7 +17,7 @@ func (s *ServerImpl) ListenTCP(addr string, cipher security.SocksCipher) {
 		log.Panicln(fmt.Sprintf("failed to listen TCP on %s: %v", addr, err))
 	}
 	defer l.Close()
-	log.Printf("listening TCP on %s\n", addr)
+	shadow.Printf("listening TCP on %s\n", addr)
 
 	for {
 		c, err := l.Accept()
