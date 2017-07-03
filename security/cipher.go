@@ -9,6 +9,7 @@ import (
 
 type SocksCipher interface {
 	NewStream(conn net.Conn) net.Conn
+	NewPacket(conn net.PacketConn) net.PacketConn
 }
 
 // TODO password can't blank

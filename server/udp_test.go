@@ -3,20 +3,20 @@ package server
 import (
 	"fmt"
 	"net"
-	"shadowsocks/config"
-	"shadowsocks/security"
-	"shadowsocks/shadow"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+
+	"shadowsocks/config"
+	"shadowsocks/security"
+	"shadowsocks/shadow"
 )
 
-var txt string = "Hello ShadowSocks"
+func TestListenServerUDP(t *testing.T) {
+	go cloudUDP()
 
-func TestListenServerTCP(t *testing.T) {
-	go cloudTCP()
 	testAddr := []struct {
 		name, address string
 	}{
@@ -31,46 +31,46 @@ func TestListenServerTCP(t *testing.T) {
 		{"Stream192CFB", "AES-192-CFB:Shadowsocks!Go@google.com:8558"},
 		{"Stream256CFB", "AES-256-CFB:Shadowsocks!Go@google.com:8568"},
 	}
+
 	for _, a := range testAddr {
 		t.Run(a.name, func(t *testing.T) {
-			testServerTCP(t, a.address)
+			testServerUDP(t, a.address)
 		})
 	}
 }
 
-func testServerTCP(t *testing.T, addr string) {
+func testServerUDP(t *testing.T, addr string) {
+	buf := make([]byte, udpBufSize)
 	assert := assert.New(t)
+
 	shadow.ParseURI(addr)
 	setting := config.Setting
-
 	ciph := security.Choice(setting.Cipher, setting.Password)
 	s := &ServerImpl{}
-	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
-	time.Sleep(time.Second)
-
-	ciph2 := security.Choice(setting.Cipher, setting.Password)
-	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", setting.Port))
-	assert.Nil(err)
-	conn = ciph2.NewStream(conn)
-	defer conn.Close()
+	go s.ListenUDP(fmt.Sprintf(":%s", setting.Port), ciph)
 
 	b, _ := shadow.MarshalAddr("127.0.0.1:3000")
-	n, err := conn.Write(b)
-	assert.Nil(err)
-	assert.Equal(n, len(b))
-	buf := make([]byte, len(txt))
-	conn.Read(buf)
-	assert.Equal("HELLO SHADOWSOCKS", string(buf))
+	n := copy(buf, b)
+	tn := copy(buf[n:], []byte(txt))
+
+	laddr, _ := net.ResolveUDPAddr("udp", fmt.Sprintf("127.0.0.1:%s", setting.Port))
+	l, _ := net.ListenPacket("udp", ":3222")
+	defer l.Close()
+	l = ciph.NewPacket(l)
+	l.WriteTo(buf[:n+tn], laddr)
+	n, _, _ = l.ReadFrom(buf)
+	raddr, _ := shadow.ReadAddrFromBytes(buf[:n])
+	assert.Equal(strings.ToUpper(txt), string(buf[len(raddr):n]))
+	time.Sleep(time.Second * 2)
 }
 
-// mock of distance tcp server
-func cloudTCP() {
-	l, _ := net.Listen("tcp", fmt.Sprintf("127.0.0.1:3000"))
+func cloudUDP() {
+	buf := make([]byte, udpBufSize)
+	l, _ := net.ListenPacket("udp", ":3000")
 	defer l.Close()
+
 	for {
-		c, _ := l.Accept()
-		defer c.Close()
-		c.(*net.TCPConn).SetKeepAlive(true)
-		c.Write([]byte(strings.ToUpper(txt)))
+		n, addr, _ := l.ReadFrom(buf)
+		l.WriteTo([]byte(strings.ToUpper(string(buf[:n]))), addr)
 	}
 }

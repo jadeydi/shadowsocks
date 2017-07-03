@@ -1,6 +1,7 @@
 package shadow
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"net"
@@ -103,4 +104,8 @@ func ReadAddr(r io.Reader) (Address, error) {
 	}
 
 	return nil, AddressNotSupportedError
+}
+
+func ReadAddrFromBytes(b []byte) (Address, error) {
+	return ReadAddr(bytes.NewBuffer(b))
 }

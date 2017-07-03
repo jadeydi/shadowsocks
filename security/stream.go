@@ -38,6 +38,17 @@ func (sc *StreamCipher) NewStream(conn net.Conn) net.Conn {
 	}
 }
 
+func (sc *StreamCipher) NewPacket(conn net.PacketConn) net.PacketConn {
+	return &stream.Packet{
+		PacketConn: conn,
+		IVSize:     sc.IVSize,
+		Key:        sc.Key,
+		Payload:    make([]byte, 64*1024),
+		Encrypter:  sc.Encrypter,
+		Decrypter:  sc.Decrypter,
+	}
+}
+
 // CFB mode
 func CFBEncrypter(key, iv []byte) (cipher.Stream, error) {
 	block, err := aes.NewCipher(key)

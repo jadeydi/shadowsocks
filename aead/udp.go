@@ -13,11 +13,11 @@ var _zerononce [32]byte // read-only.
 
 type Packet struct {
 	sync.Mutex
-	Salt     []byte
-	SaltSize int
-	Payload  []byte
-
 	net.PacketConn
+
+	Salt        []byte
+	SaltSize    int
+	Payload     []byte
 	AEADBuilder func(salt []byte) (cipher.AEAD, error)
 }
 
@@ -57,7 +57,7 @@ func (p *Packet) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	if _, err = io.ReadFull(rand.Reader, salt); err != nil {
 		return
 	}
-	gcm, err := p.AEADBuilder(b[:p.SaltSize])
+	gcm, err := p.AEADBuilder(salt)
 	if err != nil {
 		return
 	}

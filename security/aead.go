@@ -51,3 +51,12 @@ func (mc *MetaCipher) NewStream(conn net.Conn) net.Conn {
 		AEADBuilder: mc.AEADBuilder,
 	}
 }
+
+func (mc *MetaCipher) NewPacket(conn net.PacketConn) net.PacketConn {
+	return &aead.Packet{
+		PacketConn:  conn,
+		SaltSize:    mc.SaltSize,
+		Payload:     make([]byte, 64*1024),
+		AEADBuilder: mc.AEADBuilder,
+	}
+}
