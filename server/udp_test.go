@@ -3,15 +3,14 @@ package server
 import (
 	"fmt"
 	"net"
+	"shadowsocks/config"
+	"shadowsocks/security"
+	"shadowsocks/shadow"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
-
-	"shadowsocks/config"
-	"shadowsocks/security"
-	"shadowsocks/shadow"
 )
 
 func TestListenServerUDP(t *testing.T) {
@@ -40,7 +39,7 @@ func TestListenServerUDP(t *testing.T) {
 }
 
 func testServerUDP(t *testing.T, addr string) {
-	buf := make([]byte, udpBufSize)
+	buf := make([]byte, shadow.UDPBufSize)
 	assert := assert.New(t)
 
 	shadow.ParseURI(addr)

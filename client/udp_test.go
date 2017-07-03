@@ -14,10 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var txt string = "Hello ShadowSocks"
-
-func TestListenClientTCP(t *testing.T) {
-	go cloud()
+func TestListenClientUDP(t *testing.T) {
+	go cloudUDP()
 	testAddr := []struct {
 		name, address, port string
 	}{
@@ -35,49 +33,41 @@ func TestListenClientTCP(t *testing.T) {
 
 	for _, a := range testAddr {
 		t.Run(a.name, func(t *testing.T) {
-			testClientTCP(t, a.address, a.port)
+			testClientUDP(t, a.address, a.port)
 		})
 	}
 }
 
-func testClientTCP(t *testing.T, addr, port string) {
+func testClientUDP(t *testing.T, addr, port string) {
+	buf := make([]byte, shadow.UDPBufSize)
 	assert := assert.New(t)
 	shadow.ParseURI(addr)
 	setting := config.Setting
+
 	ciph := security.Choice(setting.Cipher, setting.Password)
 	c, s := &ClientImpl{}, &server.ServerImpl{}
-	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
-	go c.ListenSock(port, fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
+	go s.ListenUDP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
+	go c.ListenUDP(fmt.Sprintf(":%s", port), fmt.Sprintf("127.0.0.1:%s", setting.Port), "127.0.0.1:3000", ciph)
 	time.Sleep(time.Second)
 
-	conn, err := net.Dial("tcp", fmt.Sprintf("127.0.0.1:%s", port))
-	assert.Nil(err)
+	conn, _ := net.ListenPacket("udp", ":3222")
 	defer conn.Close()
 
-	// Handshake
-	buf := make([]byte, shadow.MaxReqLen)
-	conn.Write([]byte{5, 1, 0})
-	conn.Read(buf)
-	b := []byte{5, 1, 0}
-	b1, _ := shadow.MarshalAddr("127.0.0.1:3000")
-	b = append(b, b1...)
-	conn.Write(b)
-	conn.Read(buf)
-	assert.Equal(byte(0x5), buf[0])
-	assert.Equal(byte(0x1), buf[3])
-	buf = make([]byte, len(txt))
-	conn.Read(buf)
-	assert.Equal("HELLO SHADOWSOCKS", string(buf))
+	laddr, _ := net.ResolveUDPAddr("udp", fmt.Sprintf("127.0.0.1:%s", port))
+	n := copy(buf, []byte(txt))
+	conn.WriteTo(buf[:n], laddr)
+	n, _, _ = conn.ReadFrom(buf)
+	assert.Equal(strings.ToUpper(txt), string(buf[:n]))
+	time.Sleep(2 * time.Second)
 }
 
-// mock distance server
-func cloud() {
-	l, _ := net.Listen("tcp", fmt.Sprintf("127.0.0.1:3000"))
+func cloudUDP() {
+	buf := make([]byte, shadow.UDPBufSize)
+	l, _ := net.ListenPacket("udp", ":3000")
 	defer l.Close()
+
 	for {
-		c, _ := l.Accept()
-		defer c.Close()
-		c.(*net.TCPConn).SetKeepAlive(true)
-		c.Write([]byte(strings.ToUpper(txt)))
+		n, addr, _ := l.ReadFrom(buf)
+		l.WriteTo([]byte(strings.ToUpper(string(buf[:n]))), addr)
 	}
 }

@@ -43,9 +43,9 @@ func testServerTCP(t *testing.T, addr string) {
 	shadow.ParseURI(addr)
 	setting := config.Setting
 
-	ciph := security.Choice(setting.Cipher, setting.Password)
+	sciph := security.Choice(setting.Cipher, setting.Password)
 	s := &ServerImpl{}
-	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), ciph)
+	go s.ListenTCP(fmt.Sprintf("127.0.0.1:%s", setting.Port), sciph)
 	time.Sleep(time.Second)
 
 	ciph2 := security.Choice(setting.Cipher, setting.Password)
